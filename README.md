@@ -109,3 +109,6 @@ if __name__ == "__main__":
 
 
 ```
+
+## Мой телеграм - t.me/iceown
+## Мой блог - t.me/ic3xblog

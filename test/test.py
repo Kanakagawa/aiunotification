@@ -11,7 +11,7 @@ async def alerts(data):
 
 async def main():
     sheduler = AsyncIOScheduler()
-    client_aiu = AsyncClient(token="Your token alerts.in.ua")
+    client_aiu = AsyncClient(token="9fd8f9df49c47008b0d0825500636790a3432e37ab2203")
     client_aiun = AIUNClient(alert_in_ua_client=client_aiu,
                              sheduler=sheduler,
                              funcs=[alerts],
