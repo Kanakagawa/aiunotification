@@ -1,9 +1,10 @@
+from typing import Callable
 from alerts_in_ua.async_client import AsyncClient
-from map import MAPPING
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from typing import Callable
+from map import MAPPING
 
 
 class AIUNClient:
