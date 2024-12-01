@@ -1,0 +1,2 @@
+alerts_in_ua
+APScheduler~=3.11.0
