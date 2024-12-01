@@ -27,6 +27,5 @@ MAPPING: dict[int:dict[str:any]] = {
     29: {"title": "Автономна Республіка Крим", "alert": True},
     30: {"title": "м. Севастополь", "alert": False},
     31: {"title": "м. Київ", "alert": False},
-    32: {"title": "м. Київ або область", "alert": False}
 }
 

@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import sys
 
 from client import AIUNClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -11,15 +13,13 @@ async def alerts(data):
 
 async def main():
     sheduler = AsyncIOScheduler()
-    client_aiu = AsyncClient(token="Your token alerts.in.ua")
+    client_aiu = AsyncClient(token="9fd8f9df49c47008b0d0825500636790a3432e37ab2203")
     client_aiun = AIUNClient(alert_in_ua_client=client_aiu,
                              sheduler=sheduler,
                              funcs=[alerts],
-                             drop_padding_update=False)
+                             drop_padding_update=True)
     await client_aiun.start()
     sheduler.start()
-
-
     # Instead of the below code, use aiogram polling or any other event loop.
     # BELOW, THE CODE IS MADE FOR THE TEST.
     print("The program has started. Press Ctrl+C to stop.")
@@ -31,4 +31,5 @@ async def main():
         sheduler.shutdown(wait=False)
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main=main())

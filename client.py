@@ -1,3 +1,5 @@
+import logging
+
 from typing import Callable
 from alerts_in_ua.async_client import AsyncClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -21,6 +23,7 @@ class AIUNClient:
         self.wake_up_iteration = False
 
     async def start(self):
+        logging.info(msg=f"Successfully connected {len(self.funcs)} functions")
         self.sheduler.add_job(
             func=self._start_client,
             trigger=IntervalTrigger(seconds=self.sheduler_interval),
@@ -32,43 +35,26 @@ class AIUNClient:
         await self._parse_data(active_alerts)
 
     async def _parse_data(self, active_alerts: list):
-        update_alerts = {}
+        update_alerts: dict = {}
         active_alerts_ids = [int(alert.location_uid) for alert in active_alerts]
         for uid, value in MAPPING.items():
-            is_alert = self._should_alert(uid, value, active_alerts_ids)
-            if is_alert is not None:
-                MAPPING[uid]["alert"] = is_alert
-                update_alerts[uid] = MAPPING[uid]
-        self._handle_kyiv_alerts(update_alerts)
+            if uid in active_alerts_ids and value["alert"] is False:
+                is_alert = True
+            else:
+                if MAPPING[uid]["alert"] is True and uid not in active_alerts_ids:
+                    is_alert = False
+                else:
+                    continue
+            MAPPING[uid]["alert"] = is_alert
+            update_alerts[uid] = MAPPING[uid]
+
         if not update_alerts or (not self.wake_up_iteration and self.drop_padding_update):
             if not self.wake_up_iteration:
                 self.wake_up_iteration = True
             return
         await self.send_notification(update_alerts)
 
-    @staticmethod
-    def _should_alert(uid: int, value: dict, active_alerts_ids: list) -> bool:
-        if uid in active_alerts_ids and not value["alert"]:
-            return True
-        elif uid not in active_alerts_ids and value["alert"]:
-            return False
-        return None
-
-    def _handle_kyiv_alerts(self, update_alerts: dict):
-        kyiv_alert = MAPPING.get(34, {}).get("alert", False)
-        kyiv_region_alert = MAPPING.get(14, {}).get("alert", False)
-
-        if kyiv_alert or kyiv_region_alert:
-            self._update_kyiv_alert(True, update_alerts)
-        else:
-            self._update_kyiv_alert(False, update_alerts)
-
-    @staticmethod
-    def _update_kyiv_alert(is_alert: bool, update_alerts: dict):
-        if MAPPING[32]["alert"] != is_alert:
-            MAPPING[32]["alert"] = is_alert
-            update_alerts[32] = {"id": 32, "alert": is_alert, "name": "м. Київ або область"}
-
     async def send_notification(self, update_alerts: dict):
+        logging.info(msg=f"Map update, {len(update_alerts)} updates recorded")
         for func in self.funcs:
             await func(update_alerts)
