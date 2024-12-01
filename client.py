@@ -11,18 +11,22 @@ class AIUNClient:
     def __init__(self, alert_in_ua_client: AsyncClient,
                  sheduler: AsyncIOScheduler,
                  funcs: list[Callable],
+                 sheduler_interval: int = 20,
+                 sheduler_max_instances: int = 1000,
                  drop_padding_update: bool = True):
         self.client = alert_in_ua_client
         self.sheduler = sheduler
         self.drop_padding_update = drop_padding_update
         self.funcs = funcs
         self.wake_up_iteration = False
+        self.sheduler_interval = sheduler_interval
+        self.sheduler_max_instances = sheduler_max_instances
 
     async def start(self):
         self.sheduler.add_job(
             func=self._start_client,
-            trigger=IntervalTrigger(seconds=20),
-            max_instances=1000,
+            trigger=IntervalTrigger(seconds=self.sheduler_interval),
+            max_instances=self.sheduler_max_instances,
         )
 
     async def _start_client(self):
