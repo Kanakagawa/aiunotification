@@ -1,7 +1,8 @@
 import logging
 
 from asyncio import gather
-from typing import Callable
+from dataclasses import dataclass
+from typing import Callable, Optional
 from alerts_in_ua.async_client import AsyncClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -12,10 +13,23 @@ class TestAlert:
     location_uid: int = 28
 
 
+@dataclass
+class NotificationHanlder:
+    func: Callable
+    kwargs: Optional[dict]
+
+    @staticmethod
+    def compile(func: Callable, kwargs: dict | None = None):
+        return NotificationHanlder(
+            func=func,
+            kwargs={} if not kwargs else kwargs
+        )
+
+
 class AIUNClient:
     def __init__(self, alert_in_ua_client: AsyncClient,
                  sheduler: AsyncIOScheduler,
-                 funcs: list[Callable],
+                 funcs: list[NotificationHanlder],
                  sheduler_interval: int = 10,
                  sheduler_max_instances: int = 1000,
                  drop_padding_update: bool = True,
@@ -67,6 +81,6 @@ class AIUNClient:
     async def send_notification(self, update_alerts: dict):
         logging.info(msg=f"Map update, {len(update_alerts)} updates recorded")
         callable_task = [
-            func(update_alerts) for func in self.funcs
+             notif_handler.func(update_alerts, **notif_handler.kwargs) for notif_handler in self.funcs
         ]
         await gather(*callable_task)
