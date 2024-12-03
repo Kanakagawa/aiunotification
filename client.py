@@ -31,7 +31,7 @@ class AIUNClient:
                  sheduler_interval: int = 10,
                  sheduler_max_instances: int = 1000,
                  drop_padding_update: bool = True,
-                 test_alert: None | list[TestAlert] = None):
+                 test_alert: Optional[TestAlert] = None):
         self.client = alert_in_ua_client
         self.sheduler = sheduler
         self.funcs = funcs
