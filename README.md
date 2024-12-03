@@ -39,7 +39,7 @@ async def main():
                              sheduler=sheduler,
                              sheduler_interval=5,
                              funcs=[
-                                 NotificationHanlder.compile(
+                                 NotificationHanlder.collect(
                                      func=alerts_handler,
                                      kwargs={
                                          "my_arg": True

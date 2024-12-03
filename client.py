@@ -19,7 +19,7 @@ class NotificationHanlder:
     kwargs: Optional[dict]
 
     @staticmethod
-    def compile(func: Callable, kwargs: dict | None = None):
+    def collect(func: Callable, kwargs: dict | None = None):
         return NotificationHanlder(
             func=func,
             kwargs={} if not kwargs else kwargs
