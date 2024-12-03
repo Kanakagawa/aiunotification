@@ -66,6 +66,24 @@ class AIUNClient:
             max_instances=self.sheduler_max_instances,
         )
 
+    @staticmethod
+    def to_alert_obj(update_alerts: dict) -> list[NotificationAlert]:
+        update_data_obj = []
+        for location_id, other_data in update_alerts.items():
+            update_data_obj.append(NotificationAlert.from_dict(location_id, other_data))
+
+        return update_data_obj
+
+    async def send_notification(self, update_alerts: list[NotificationAlert]):
+        logging.info(msg=f"Map update, {len(update_alerts)} updates recorded")
+        handlers = await self._use_filters(update_alerts)
+        if not handlers:
+            return
+        callable_task = [
+             notif_handler.func(update_alerts, **notif_handler.kwargs) for notif_handler in handlers
+        ]
+        await gather(*callable_task)
+
     async def _start_client(self):
         if self.test_alert:
             active_alerts = self.test_alert
@@ -95,24 +113,6 @@ class AIUNClient:
             update_alerts = await self.global_filter(update_alerts)
         await self.send_notification(self.to_alert_obj(update_alerts))
 
-    @staticmethod
-    def to_alert_obj(update_alerts: dict) -> list[NotificationAlert]:
-        update_data_obj = []
-        for location_id, other_data in update_alerts.items():
-            update_data_obj.append(NotificationAlert.from_dict(location_id, other_data))
-
-        return update_data_obj
-
-    async def send_notification(self, update_alerts: list[NotificationAlert]):
-        logging.info(msg=f"Map update, {len(update_alerts)} updates recorded")
-        handlers = await self._use_filters(update_alerts)
-        if not handlers:
-            return
-        callable_task = [
-             notif_handler.func(update_alerts, **notif_handler.kwargs) for notif_handler in handlers
-        ]
-        await gather(*callable_task)
-
     async def _use_filters(self, update_alerts: list[NotificationAlert]) -> list[NotificationHanlder]:
         handlers = []
         for handler in self.funcs:
@@ -122,6 +122,8 @@ class AIUNClient:
                     handlers.append(handler)
                 else:
                     continue
+            else:
+                handlers.append(handler)
         return handlers
 
 
