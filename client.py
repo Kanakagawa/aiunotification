@@ -1,19 +1,25 @@
 import logging
 
+from asyncio import gather
 from typing import Callable
 from alerts_in_ua.async_client import AsyncClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+
 from map import MAPPING
+
+class TestAlert:
+    location_uid: int = 28
 
 
 class AIUNClient:
     def __init__(self, alert_in_ua_client: AsyncClient,
                  sheduler: AsyncIOScheduler,
                  funcs: list[Callable],
-                 sheduler_interval: int = 20,
+                 sheduler_interval: int = 10,
                  sheduler_max_instances: int = 1000,
-                 drop_padding_update: bool = True):
+                 drop_padding_update: bool = True,
+                 test_alert: bool = False):
         self.client = alert_in_ua_client
         self.sheduler = sheduler
         self.funcs = funcs
@@ -21,6 +27,7 @@ class AIUNClient:
         self.sheduler_max_instances = sheduler_max_instances
         self.drop_padding_update = drop_padding_update
         self.wake_up_iteration = False
+        self.test_alert = test_alert
 
     async def start(self):
         logging.info(msg=f"Successfully connected {len(self.funcs)} functions")
@@ -31,8 +38,11 @@ class AIUNClient:
         )
 
     async def _start_client(self):
-        active_alerts = await self.client.get_active_alerts()
-        await self._parse_data(active_alerts)
+        if self.test_alert:
+            await self._parse_data([TestAlert()])
+        else:
+            active_alerts = await self.client.get_active_alerts()
+            await self._parse_data(active_alerts)
 
     async def _parse_data(self, active_alerts: list):
         update_alerts: dict = {}
@@ -56,5 +66,7 @@ class AIUNClient:
 
     async def send_notification(self, update_alerts: dict):
         logging.info(msg=f"Map update, {len(update_alerts)} updates recorded")
-        for func in self.funcs:
-            await func(update_alerts)
+        callable_task = [
+            func(update_alerts) for func in self.funcs
+        ]
+        await gather(*callable_task)

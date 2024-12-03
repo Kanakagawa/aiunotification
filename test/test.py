@@ -1,23 +1,24 @@
 import asyncio
 import logging
 import sys
-
+from os import getenv
 from client import AIUNClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts_in_ua.async_client import AsyncClient
 
-
+TOKEN_ALERTS_IN_UA = getenv("TOKEN")
 async def alerts(data):
     print(data)
 
 
 async def main():
     sheduler = AsyncIOScheduler()
-    client_aiu = AsyncClient(token="alerts.in.ua")
+    client_aiu = AsyncClient(token=TOKEN_ALERTS_IN_UA)
     client_aiun = AIUNClient(alert_in_ua_client=client_aiu,
                              sheduler=sheduler,
                              funcs=[alerts],
-                             drop_padding_update=True)
+                             drop_padding_update=False,
+                             test_alert=True)
     await client_aiun.start()
     sheduler.start()
     # Instead of the below code, use aiogram polling or any other event loop.
