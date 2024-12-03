@@ -2,18 +2,36 @@ import asyncio
 import logging
 import sys
 from os import getenv
+from contextlib import suppress
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts_in_ua.async_client import AsyncClient
 
-from client import AIUNClient, NotificationHanlder
+from client import AIUNClient, NotificationHanlder, NotificationAlert
 from utils.test_alert import create_test_alert_map
 
 TOKEN_ALERTS_IN_UA = getenv("TOKEN")
 
 
-async def alerts_handler(data, my_arg: bool):
-    logging.info(msg=f"{data=}\n{my_arg=}")
+async def handler_filter(n_data: list[NotificationAlert]) -> bool:
+    """
+    Use an internal filter for the handler, your filter should return True or False
+    """
+    return True
+
+async def global_filter(n_data: dict[int:dict]) -> dict:
+    """
+
+    Use a global filter to run code before the client sends notifications to handlers.
+
+    The global filter should return the received date back. Internal data can be changed, but new ones cannot be added.
+
+    """
+    return n_data
+
+
+async def alerts_handler(n_data: list[NotificationAlert], my_arg: bool):
+    logging.info(msg=f"{n_data=}\n{my_arg=}")
 
 
 async def main():
@@ -27,9 +45,11 @@ async def main():
                                      func=alerts_handler,
                                      kwargs={
                                          "my_arg": True
-                                     }
+                                     },
+                                     custom_filter=handler_filter
                                  )
                              ],
+                             global_filter=global_filter,
                              drop_padding_update=False,
                              test_alert=create_test_alert_map(alert_ids=[
                                  31, 14, 15, 20
@@ -48,5 +68,6 @@ async def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(main=main())
+    with suppress(KeyboardInterrupt, RuntimeError):
+        logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+        asyncio.run(main=main())
