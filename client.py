@@ -29,7 +29,7 @@ class AIUNClient:
         self.wake_up_iteration = False
         self.test_alert = test_alert
 
-    async def start(self):
+    def add_job(self):
         logging.info(msg=f"Successfully connected {len(self.funcs)} functions")
         self.sheduler.add_job(
             func=self._start_client,

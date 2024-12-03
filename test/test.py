@@ -22,7 +22,7 @@ async def main():
                              funcs=[alerts],
                              drop_padding_update=False,
                              test_alert=True)
-    await client_aiun.start()
+    client_aiun.add_job()
     sheduler.start()
     # Instead of the below code, use aiogram polling or any other event loop.
     # BELOW, THE CODE IS MADE FOR THE TEST.
