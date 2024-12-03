@@ -39,10 +39,10 @@ class AIUNClient:
 
     async def _start_client(self):
         if self.test_alert:
-            await self._parse_data([TestAlert()])
+            active_alerts = [TestAlert()]
         else:
             active_alerts = await self.client.get_active_alerts()
-            await self._parse_data(active_alerts)
+        await self._parse_data(active_alerts)
 
     async def _parse_data(self, active_alerts: list):
         update_alerts: dict = {}

@@ -6,7 +6,10 @@ from client import AIUNClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts_in_ua.async_client import AsyncClient
 
+
 TOKEN_ALERTS_IN_UA = getenv("TOKEN")
+
+
 async def alerts(data):
     print(data)
 
@@ -30,6 +33,7 @@ async def main():
     except KeyboardInterrupt:
         print("Stopping the program...")
         sheduler.shutdown(wait=False)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
