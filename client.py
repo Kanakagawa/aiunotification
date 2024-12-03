@@ -111,6 +111,7 @@ class AIUNClient:
             return
         if self.global_filter:
             update_alerts = await self.global_filter(update_alerts)
+            if not update_alerts: return
         await self.send_notification(self.to_alert_obj(update_alerts))
 
     async def _use_filters(self, update_alerts: list[NotificationAlert]) -> list[NotificationHanlder]:
