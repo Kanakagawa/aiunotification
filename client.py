@@ -6,11 +6,9 @@ from typing import Callable, Optional
 from alerts_in_ua.async_client import AsyncClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-
+from utils.test_alert import TestAlert
 from map import MAPPING
 
-class TestAlert:
-    location_uid: int = 28
 
 
 @dataclass
@@ -33,7 +31,7 @@ class AIUNClient:
                  sheduler_interval: int = 10,
                  sheduler_max_instances: int = 1000,
                  drop_padding_update: bool = True,
-                 test_alert: bool = False):
+                 test_alert: None | list[TestAlert] = None):
         self.client = alert_in_ua_client
         self.sheduler = sheduler
         self.funcs = funcs
@@ -53,7 +51,7 @@ class AIUNClient:
 
     async def _start_client(self):
         if self.test_alert:
-            active_alerts = [TestAlert()]
+            active_alerts = self.test_alert
         else:
             active_alerts = await self.client.get_active_alerts()
         await self._parse_data(active_alerts)

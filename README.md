@@ -13,17 +13,19 @@
 К примеру вы можете склонировать данный репозиторий в папку вашего проекта например models/aiunotification не забудьте создать __init__.py
 
 
-## Использование
+## Используйте тесты
 
 ```python
 import asyncio
 import logging
 import sys
 from os import getenv
-from client import AIUNClient, NotificationHanlder
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts_in_ua.async_client import AsyncClient
 
+from client import AIUNClient, NotificationHanlder
+from utils.test_alert import create_test_alert_map
 
 TOKEN_ALERTS_IN_UA = getenv("TOKEN")
 
@@ -47,7 +49,9 @@ async def main():
                                  )
                              ],
                              drop_padding_update=False,
-                             test_alert=True)
+                             test_alert=create_test_alert_map(alert_ids=[
+                                 31, 14, 15, 20
+                             ]))
     client_aiun.add_job()
     sheduler.start()
     # Instead of the below code, use aiogram polling or any other event loop.
@@ -64,6 +68,7 @@ async def main():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main=main())
+
 ```
 
 ## Мой телеграм - t.me/iceown
