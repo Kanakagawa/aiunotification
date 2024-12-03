@@ -16,10 +16,10 @@ from map import MAPPING
 class NotificationHanlder:
     func: Callable
     kwargs: Optional[dict]
-    filter: Callable
+    filter: Optional[Callable]
 
     @staticmethod
-    def collect(func: Callable, kwargs: dict | None = None, custom_filter: Callable | None = None) -> "NotificationHanlder":
+    def collect(func: Callable, kwargs: Optional[dict] = None, custom_filter: Optional[Callable] = None) -> "NotificationHanlder":
         return NotificationHanlder(
             func=func,
             kwargs={} if not kwargs else kwargs,
