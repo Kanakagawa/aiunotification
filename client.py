@@ -4,7 +4,6 @@ from asyncio import gather
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from aiohttp.web_middlewares import middleware
 from alerts_in_ua.async_client import AsyncClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -13,13 +12,13 @@ from map import MAPPING
 
 
 @dataclass
-class NotificationHanlder:
+class NotificationHandler:
     func: Callable
     kwargs: Optional[dict]
     filter: Optional[Callable]
 
     @staticmethod
-    def collect(func: Callable, kwargs: Optional[dict] = None, custom_filter: Optional[Callable] = None) -> "NotificationHanlder":
+    def collect(func: Callable, kwargs: Optional[dict] = None, custom_filter: Optional[Callable] = None) -> "NotificationHandler":
         """
             NotificationHanlder defines a structure for handling notifications, including
             the processing function, optional arguments, and an optional filter.
@@ -36,7 +35,7 @@ class NotificationHanlder:
                     determine whether the handler should process the notification data.
                     The filter receives the notification data and returns a boolean.
         """
-        return NotificationHanlder(
+        return NotificationHandler(
             func=func,
             kwargs={} if not kwargs else kwargs,
             filter=custom_filter
@@ -64,17 +63,17 @@ class AIUNClient:
             alert_in_ua_client (AsyncClient): The asynchronous client instance responsible
                 for interacting with the alert system's API.
 
-            sheduler (AsyncIOScheduler): The scheduler instance used for periodically
+            scheduler (AsyncIOScheduler): The scheduler instance used for periodically
                 running tasks, such as fetching and processing alert data.
 
             funcs (list[NotificationHandler]): A list of notification handler objects. Each
                 handler defines a `func` to process notifications and an optional `filter` to
                 determine whether the handler should run.
 
-            sheduler_interval (int, optional): Interval in seconds between task executions
+            scheduler_interval (int, optional): Interval in seconds between task executions
                 scheduled by the `sheduler`. Default is 10 seconds.
 
-            sheduler_max_instances (int, optional): Maximum number of concurrent task
+            scheduler_max_instances (int, optional): Maximum number of concurrent task
                 instances that the `sheduler` can execute. Default is 1000.
 
             drop_padding_update (bool, optional): Determines whether to skip updates that
@@ -89,18 +88,18 @@ class AIUNClient:
                 or an empty result if no updates should be processed. Default is None.
         """
     def __init__(self, alert_in_ua_client: AsyncClient,
-                 sheduler: AsyncIOScheduler,
-                 funcs: list[NotificationHanlder],
-                 sheduler_interval: int = 10,
-                 sheduler_max_instances: int = 1000,
+                 scheduler: AsyncIOScheduler,
+                 funcs: list[NotificationHandler],
+                 scheduler_interval: int = 10,
+                 scheduler_max_instances: int = 1000,
                  drop_padding_update: bool = True,
                  test_alert: Optional[TestAlert] = None,
                  global_filter: Optional[Callable] = None):
         self.client = alert_in_ua_client
-        self.sheduler = sheduler
+        self.scheduler = scheduler
         self.funcs = funcs
-        self.sheduler_interval = sheduler_interval
-        self.sheduler_max_instances = sheduler_max_instances
+        self.scheduler_interval = scheduler_interval
+        self.scheduler_max_instances = scheduler_max_instances
         self.drop_padding_update = drop_padding_update
         self.wake_up_iteration = False
         self.test_alert = test_alert
@@ -108,10 +107,10 @@ class AIUNClient:
 
     def add_job(self):
         logging.info(msg=f"Successfully connected {len(self.funcs)} functions")
-        self.sheduler.add_job(
+        self.scheduler.add_job(
             func=self._start_client,
-            trigger=IntervalTrigger(seconds=self.sheduler_interval),
-            max_instances=self.sheduler_max_instances,
+            trigger=IntervalTrigger(seconds=self.scheduler_interval),
+            max_instances=self.scheduler_max_instances,
         )
 
     @staticmethod
@@ -162,7 +161,7 @@ class AIUNClient:
             if not update_alerts: return
         await self.send_notification(self.to_alert_obj(update_alerts))
 
-    async def _use_filters(self, update_alerts: list[NotificationAlert]) -> list[NotificationHanlder]:
+    async def _use_filters(self, update_alerts: list[NotificationAlert]) -> list[NotificationHandler]:
         handlers = []
         for handler in self.funcs:
             if handler.filter is not None:

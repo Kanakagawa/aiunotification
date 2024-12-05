@@ -7,6 +7,7 @@
 - **Планировщик задач** для регулярного выполнения проверки уведомлений (каждые 10 секунд по умолчанию).
 - **Гибкость**: возможность передавать собственные функции для обработки оповещений и отправки уведомлений.
 - **Механизм обновлений**: проверка изменений в оповещениях и обновление данных с учётом заданных условий.
+- **Фильтры**: выполнение ваших кастомных фильтров перед вызовом обработчиков.
   
 ## Установка
 Для установки вам потребуется установить зависимости из файла requirements.txt после того как вы склонируете данный репозиторий.
@@ -25,7 +26,7 @@ from contextlib import suppress
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts_in_ua.async_client import AsyncClient
 
-from client import AIUNClient, NotificationHanlder, NotificationAlert
+from client import AIUNClient, NotificationHandler, NotificationAlert
 from utils.test_alert import create_test_alert_map
 
 TOKEN_ALERTS_IN_UA = getenv("TOKEN")
@@ -53,13 +54,13 @@ async def alerts_handler(n_data: list[NotificationAlert], my_arg: bool):
 
 
 async def main():
-    sheduler = AsyncIOScheduler()
+    scheduler  = AsyncIOScheduler()
     client_aiu = AsyncClient(token=TOKEN_ALERTS_IN_UA)
     client_aiun = AIUNClient(alert_in_ua_client=client_aiu,
-                             sheduler=sheduler,
-                             sheduler_interval=5,
+                             scheduler =scheduler,
+                             scheduler_interval=5,
                              funcs=[
-                                 NotificationHanlder.collect(
+                                 NotificationHandler.collect(
                                      func=alerts_handler,
                                      kwargs={
                                          "my_arg": True
@@ -73,7 +74,7 @@ async def main():
                                  31, 14, 15, 20
                              ]))
     client_aiun.add_job()
-    sheduler.start()
+    scheduler .start()
     # Instead of the below code, use aiogram polling or any other event loop.
     # BELOW, THE CODE IS MADE FOR THE TEST.
     print("The program has started. Press Ctrl+C to stop.")
@@ -82,13 +83,14 @@ async def main():
         await stop_event.wait()
     except KeyboardInterrupt:
         print("Stopping the program...")
-        sheduler.shutdown(wait=False)
+        scheduler .shutdown(wait=False)
 
 
 if __name__ == "__main__":
     with suppress(KeyboardInterrupt, RuntimeError):
         logging.basicConfig(level=logging.INFO, stream=sys.stdout)
         asyncio.run(main=main())
+
 
 
 ```
