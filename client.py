@@ -20,6 +20,22 @@ class NotificationHanlder:
 
     @staticmethod
     def collect(func: Callable, kwargs: Optional[dict] = None, custom_filter: Optional[Callable] = None) -> "NotificationHanlder":
+        """
+            NotificationHanlder defines a structure for handling notifications, including
+            the processing function, optional arguments, and an optional filter.
+
+            Attributes:
+                func (Callable): The function to be executed for processing notifications.
+                    This function is called with the notification data and any additional
+                    arguments specified in `kwargs`.
+
+                kwargs (Optional[dict]): A dictionary of keyword arguments passed to `func`.
+                    Default is an empty dictionary if not provided.
+
+                custom_filter (Optional[Callable]): An optional callable (filter function) used to
+                    determine whether the handler should process the notification data.
+                    The filter receives the notification data and returns a boolean.
+        """
         return NotificationHanlder(
             func=func,
             kwargs={} if not kwargs else kwargs,
@@ -40,6 +56,38 @@ class NotificationAlert:
 
 
 class AIUNClient:
+    """
+        AIUNClient manages notification handling, including fetching alerts, filtering,
+        and executing notification tasks periodically using an asynchronous scheduler.
+
+        Args:
+            alert_in_ua_client (AsyncClient): The asynchronous client instance responsible
+                for interacting with the alert system's API.
+
+            sheduler (AsyncIOScheduler): The scheduler instance used for periodically
+                running tasks, such as fetching and processing alert data.
+
+            funcs (list[NotificationHandler]): A list of notification handler objects. Each
+                handler defines a `func` to process notifications and an optional `filter` to
+                determine whether the handler should run.
+
+            sheduler_interval (int, optional): Interval in seconds between task executions
+                scheduled by the `sheduler`. Default is 10 seconds.
+
+            sheduler_max_instances (int, optional): Maximum number of concurrent task
+                instances that the `sheduler` can execute. Default is 1000.
+
+            drop_padding_update (bool, optional): Determines whether to skip updates that
+                occur during the initial wake-up iteration. Default is True.
+
+            test_alert (Optional[TestAlert], optional): A mock or pre-defined alert object for
+                testing purposes. If provided, it will be used instead of fetching real alerts
+                from the `alert_in_ua_client`. Default is None.
+
+            global_filter (Optional[Callable], optional): A global filter function applied
+                to all updates. It takes the raw update data and returns the filtered data
+                or an empty result if no updates should be processed. Default is None.
+        """
     def __init__(self, alert_in_ua_client: AsyncClient,
                  sheduler: AsyncIOScheduler,
                  funcs: list[NotificationHanlder],
