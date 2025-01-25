@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 from alerts_in_ua.async_client import AsyncClient
+from alerts_in_ua.errors import UnauthorizedError
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from utils.test_alert import TestAlert
@@ -93,7 +94,7 @@ class AIUNClient:
                  scheduler_interval: int = 10,
                  scheduler_max_instances: int = 1000,
                  drop_padding_update: bool = True,
-                 test_alert: Optional[TestAlert] = None,
+                 test_alert: Optional[list[TestAlert]] = None,
                  global_filter: Optional[Callable] = None):
         self.client = alert_in_ua_client
         self.scheduler = scheduler
@@ -132,11 +133,17 @@ class AIUNClient:
         await gather(*callable_task)
 
     async def _start_client(self):
-        if self.test_alert:
-            active_alerts = self.test_alert
-        else:
-            active_alerts = await self.client.get_active_alerts()
-        await self._parse_data(active_alerts)
+        try:
+            if self.test_alert:
+                active_alerts = self.test_alert
+            else:
+                active_alerts = await self.client.get_active_alerts()
+                logging.info(msg=f"Active Alerts: {[alert.location_title for alert in active_alerts]}")
+            await self._parse_data(active_alerts)
+
+        except UnauthorizedError:
+            logging.error(msg="Invalid API token. HTTP Code:401")
+            await self.scheduler.shutdown()
 
     async def _parse_data(self, active_alerts: list):
         update_alerts: dict = {}
@@ -157,8 +164,8 @@ class AIUNClient:
                 self.wake_up_iteration = True
             return
         if self.global_filter:
-            update_alerts = await self.global_filter(update_alerts)
             if not update_alerts: return
+            update_alerts = await self.global_filter(update_alerts)
         await self.send_notification(self.to_alert_obj(update_alerts))
 
     async def _use_filters(self, update_alerts: list[NotificationAlert]) -> list[NotificationHandler]:

@@ -2,6 +2,9 @@ import asyncio
 import logging
 import sys
 from os import getenv
+from pprint import pprint
+
+from dotenv import load_dotenv
 from contextlib import suppress
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -9,8 +12,10 @@ from alerts_in_ua.async_client import AsyncClient
 
 from client import AIUNClient, NotificationHandler, NotificationAlert
 from utils.test_alert import create_test_alert_map
+load_dotenv()
 
 TOKEN_ALERTS_IN_UA = getenv("TOKEN")
+print(TOKEN_ALERTS_IN_UA)
 
 
 async def handler_filter(n_data: list[NotificationAlert]) -> bool:
@@ -27,6 +32,7 @@ async def global_filter(n_data: dict[int:dict]) -> dict:
     The global filter should return the received date back. Internal data can be changed, but new ones cannot be added.
 
     """
+    pprint(n_data)
     return n_data
 
 
@@ -50,10 +56,7 @@ async def main():
                                  )
                              ],
                              global_filter=global_filter,
-                             drop_padding_update=False,
-                             test_alert=create_test_alert_map(alert_ids=[
-                                 31, 14, 15, 20
-                             ]))
+                             drop_padding_update=False)
     client_aiun.add_job()
     scheduler .start()
     # Instead of the below code, use aiogram polling or any other event loop.
